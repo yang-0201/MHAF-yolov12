@@ -276,8 +276,22 @@ class YOLODataset(BaseDataset):
                 f"len(boxes) = {len_boxes}. To resolve this only boxes will be used and all segments will be removed. "
                 "To avoid this please supply either a detect or segment dataset, not a detect-segment mixed dataset."
             )
-            for lb in labels:
-                lb["segments"] = []
+            error_files = []
+
+            for i in range(len(labels)):
+                if len(labels_seg[i]['segments']) != len(labels[i]['bboxes']):
+                    error_files.append(i)
+                    print(labels[i]['im_file'])
+                    continue
+                lb_seg = labels_seg[i]['segments']
+                labels[i]['segments'] = lb_seg
+
+            for i in sorted(error_files, reverse=True):
+                del labels[i]
+                del labels_seg[i]
+
+            # for lb in labels:
+            #     lb["segments"] = []
         if len_cls == 0:
             LOGGER.warning(f"Labels are missing or empty in {cache_path}, training may not work correctly. {HELP_URL}")
         return labels, labels_seg
@@ -327,7 +341,7 @@ class YOLODataset(BaseDataset):
         hyp.cutmix = 0.0
         self.transforms = self.build_transforms(hyp)
 
-    def update_labels_info(self, label: Dict, label_seg: Dict) -> Dict:
+    def update_labels_info(self, label: Dict) -> Dict:
         """
         Update label format for different tasks.
 
@@ -342,8 +356,11 @@ class YOLODataset(BaseDataset):
             Can also support classification and semantic segmentation by adding or removing dict keys there.
         """
         bboxes = label.pop("bboxes")
+        # label['segments'] = label_seg['segments']
         # segments = label.pop("segments", [])
-        segments = label_seg.pop("segments", [])
+        segments = label.pop("segments", [])
+        # if len(bboxes) != len(segments):
+        #     raise"wrong"
         keypoints = label.pop("keypoints", None)
         bbox_format = label.pop("bbox_format")
         normalized = label.pop("normalized")
@@ -351,7 +368,7 @@ class YOLODataset(BaseDataset):
         # NOTE: do NOT resample oriented boxes
         segment_resamples = 100 if self.use_obb else 1000
         if len(segments) > 0:
-            # make sure segments interpolate correctly if original length is greater than segment_resamples
+            # make sure segments interpolate correcnal length is greatly if origiter than segment_resamples
             max_len = max(len(s) for s in segments)
             segment_resamples = (max_len + 1) if segment_resamples < max_len else segment_resamples
             # list[np.array(segment_resamples, 2)] * num_samples
@@ -359,6 +376,8 @@ class YOLODataset(BaseDataset):
         else:
             segments = np.zeros((0, segment_resamples, 2), dtype=np.float32)
         label["instances"] = Instances(bboxes, segments, keypoints, bbox_format=bbox_format, normalized=normalized)
+        # if len(bboxes) != len(segments):
+        #     raise"wrong"
         return label
 
     @staticmethod

@@ -389,7 +389,6 @@ class BaseDataset(Dataset):
             (Dict[str, Any]): Label dictionary with image and metadata.
         """
         label = deepcopy(self.labels[index])  # requires deepcopy() https://github.com/ultralytics/ultralytics/pull/1948
-        label_seg = deepcopy(self.labels_seg[index])
         label.pop("shape", None)  # shape is for rect, remove it
         label["img"], label["ori_shape"], label["resized_shape"] = self.load_image(index)
         label["ratio_pad"] = (
@@ -398,15 +397,15 @@ class BaseDataset(Dataset):
         )  # for evaluation
         if self.rect:
             label["rect_shape"] = self.batch_shapes[self.batch[index]]
-        return self.update_labels_info(label, label_seg)
+        return self.update_labels_info(label)
 
     def __len__(self) -> int:
         """Return the length of the labels list for the dataset."""
         return len(self.labels)
 
-    def update_labels_info(self, label: Dict[str, Any], label_seg: Dict[str, Any]) -> Dict[str, Any]:
+    def update_labels_info(self, label: Dict[str, Any]) -> Dict[str, Any]:
         """Custom your label format here."""
-        return label, label_seg
+        return label
 
     def build_transforms(self, hyp: Optional[Dict[str, Any]] = None):
         """

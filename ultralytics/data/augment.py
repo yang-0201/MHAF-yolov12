@@ -394,7 +394,9 @@ class BaseMixTransform:
 
         # Get images information will be used for Mosaic, CutMix or MixUp
         mix_labels = [self.dataset.get_image_and_label(i) for i in indexes]
-
+        # for lable in mix_labels:
+        #     if len(lable['instances'].bboxes) != len(lable['instances'].segments):
+        #         raise "wrong"
         if self.pre_transform is not None:
             for i, data in enumerate(mix_labels):
                 mix_labels[i] = self.pre_transform(data)
@@ -707,7 +709,11 @@ class Mosaic(BaseMixTransform):
 
             labels_patch = self._update_labels(labels_patch, padw, padh)
             mosaic_labels.append(labels_patch)
+
         final_labels = self._cat_labels(mosaic_labels)
+        # if len( final_labels["instances"].segments) != len(final_labels["instances"].bboxes):
+        #     raise "wrong"
+
         final_labels["img"] = img4
         return final_labels
 
@@ -804,6 +810,7 @@ class Mosaic(BaseMixTransform):
             >>> padw, padh = 50, 50
             >>> updated_labels = Mosaic._update_labels(labels, padw, padh)
         """
+
         nh, nw = labels["img"].shape[:2]
         labels["instances"].convert_bbox(format="xyxy")
         labels["instances"].denormalize(nw, nh)
@@ -842,6 +849,8 @@ class Mosaic(BaseMixTransform):
         cls = []
         instances = []
         imgsz = self.imgsz * 2  # mosaic imgsz
+
+
         for labels in mosaic_labels:
             cls.append(labels["cls"])
             instances.append(labels["instances"])
@@ -854,11 +863,14 @@ class Mosaic(BaseMixTransform):
             "instances": Instances.concatenate(instances, axis=0),
             "mosaic_border": self.border,
         }
+        # if len( final_labels["instances"].segments) != len(final_labels["instances"].bboxes):
+        #     raise "wrong"
         final_labels["instances"].clip(imgsz, imgsz)
         good = final_labels["instances"].remove_zero_area_boxes()
         final_labels["cls"] = final_labels["cls"][good]
         if "texts" in mosaic_labels[0]:
             final_labels["texts"] = mosaic_labels[0]["texts"]
+
         return final_labels
 
 
@@ -1336,8 +1348,8 @@ class RandomPerspective:
         segments = instances.segments
         keypoints = instances.keypoints
         # Update bboxes if there are segments.
-        if len(segments):
-            bboxes, segments = self.apply_segments(segments, M)
+        # if len(segments):
+        #    bboxes, segments = self.apply_segments(segments, M)
 
         if keypoints is not None:
             keypoints = self.apply_keypoints(keypoints, M)
@@ -1348,6 +1360,9 @@ class RandomPerspective:
         # Filter instances
         instances.scale(scale_w=scale, scale_h=scale, bbox_only=True)
         # Make the bboxes have the same scale with new_bboxes
+        # i = self.box_candidates(
+        #     box1=instances.bboxes.T, box2=new_instances.bboxes.T, area_thr=0.01 if len(segments) else 0.10
+        # )
         i = self.box_candidates(
             box1=instances.bboxes.T, box2=new_instances.bboxes.T, area_thr=0.01 if len(segments) else 0.10
         )
@@ -1835,6 +1850,10 @@ class CopyPaste(BaseMixTransform):
         labels1["img"] = im
         labels1["cls"] = cls
         labels1["instances"] = instances
+        # if len( labels1["instances"].segments) != len(labels1["instances"].bboxes):
+        #     raise "wrong"
+        # labels1["instances"].segments = np.empty((0, 1000, 2), dtype=np.float32)
+
         return labels1
 
 class CopyPaste_seg(BaseMixTransform):
@@ -2054,7 +2073,7 @@ class Albumentations:
                 A.CLAHE(p=0.01),
                 A.RandomBrightnessContrast(p=0.0),
                 A.RandomGamma(p=0.0),
-                A.ImageCompression(quality_range=(75, 100), p=0.0),
+                A.ImageCompression( p=0.0),
             ]
 
             # Compose transforms

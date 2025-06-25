@@ -419,6 +419,7 @@ class Instances:
             self._bboxes = self._bboxes[good]
             if len(self.segments):
                 self.segments = self.segments[good]
+                # self.segments = None   ##增加
             if self.keypoints is not None:
                 self.keypoints = self.keypoints[good]
         return good
