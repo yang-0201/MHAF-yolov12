@@ -275,7 +275,9 @@ class YOLODataset(BaseDataset):
             if len(labels_seg[i]['segments']) != len(labels[i]['bboxes']):
                 error_files.append(i)
                 print(labels[i]['im_file'])
-                continue
+                # lb_box = labels_seg[i]['bboxes']
+                # labels[i]['bboxes'] = lb_box
+
             lb_seg = labels_seg[i]['segments']
             labels[i]['segments'] = lb_seg
 
