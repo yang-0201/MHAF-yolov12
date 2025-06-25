@@ -269,6 +269,15 @@ class YOLODataset(BaseDataset):
 
         len_cls, len_boxes, len_segments = (sum(x) for x in zip(*lengths))
         len_cls_seg, len_boxes_seg, len_segments_seg = (sum(x) for x in zip(*lengths_seg))
+        error_files = []
+
+        for i in range(len(labels)):
+            if len(labels_seg[i]['segments']) != len(labels[i]['bboxes']):
+                error_files.append(i)
+                print(labels[i]['im_file'])
+                continue
+            lb_seg = labels_seg[i]['segments']
+            labels[i]['segments'] = lb_seg
 
         if len_segments and len_boxes != len_segments or len_segments_seg and len_boxes_seg != len_segments_seg:
             LOGGER.warning(
@@ -276,19 +285,10 @@ class YOLODataset(BaseDataset):
                 f"len(boxes) = {len_boxes}. To resolve this only boxes will be used and all segments will be removed. "
                 "To avoid this please supply either a detect or segment dataset, not a detect-segment mixed dataset."
             )
-            error_files = []
 
-            for i in range(len(labels)):
-                if len(labels_seg[i]['segments']) != len(labels[i]['bboxes']):
-                    error_files.append(i)
-                    print(labels[i]['im_file'])
-                    continue
-                lb_seg = labels_seg[i]['segments']
-                labels[i]['segments'] = lb_seg
-
-            for i in sorted(error_files, reverse=True):
-                del labels[i]
-                del labels_seg[i]
+            # for i in sorted(error_files, reverse=True):
+            #     del labels[i]
+            #     del labels_seg[i]
 
             # for lb in labels:
             #     lb["segments"] = []
