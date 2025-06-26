@@ -270,7 +270,8 @@ class YOLODataset(BaseDataset):
         len_cls, len_boxes, len_segments = (sum(x) for x in zip(*lengths))
         len_cls_seg, len_boxes_seg, len_segments_seg = (sum(x) for x in zip(*lengths_seg))
         error_files = []
-
+        if len(labels_seg) != len(labels):
+            raise "labels_seg not same as labels"
         for i in range(len(labels)):
             if len(labels_seg[i]['segments']) != len(labels[i]['bboxes']):
                 error_files.append(i)
