@@ -284,7 +284,7 @@ class YOLODataset(BaseDataset):
 
             lb_seg = labels_seg[i]['segments']
             labels[i]['segments'] = lb_seg
-
+        del labels_seg
         if len_segments and len_boxes != len_segments or len_segments_seg and len_boxes_seg != len_segments_seg:
             LOGGER.warning(
                 f"Box and segment counts should be equal, but got len(segments) = {len_segments}, "
@@ -300,7 +300,7 @@ class YOLODataset(BaseDataset):
             #     lb["segments"] = []
         if len_cls == 0:
             LOGGER.warning(f"Labels are missing or empty in {cache_path}, training may not work correctly. {HELP_URL}")
-        return labels, labels_seg
+        return labels
 
     def build_transforms(self, hyp: Optional[Dict] = None) -> Compose:
         """
